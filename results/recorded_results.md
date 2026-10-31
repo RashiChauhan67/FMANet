@@ -50,6 +50,6 @@ AUC values are read from the legends of the ROC plots in the notebooks.
 | Dataset | Paper |
 |---|---|
 | Colorectal histology (Kather 5,000) | accuracy 95% |
-| NCT-CRC-HE-100K | accuracy 97% |
+| Dataset-2, named NCT-CRC-HE-100K (described as 7,180 images, Zenodo 1214456) | accuracy 97% |
 
-The recorded numbers match the paper's accuracies at that precision, with the caveat that the second dataset in the recorded notebook is CRC-VAL-HE-7K. See the README for the other differences between the notebooks and the paper.
+The recorded numbers match the paper's accuracies at that precision. The paper's Dataset-2 is described as 7,180 images, which is the CRC-VAL-HE-7K set used in the notebook. See the README for the other differences between the notebooks and the paper.

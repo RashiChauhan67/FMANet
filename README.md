@@ -7,7 +7,7 @@
 
 > **Paper.** R. Chauhan, K. Mohan, P. Singh. *Fused multi-level attention features with a constraint fusion network for colorectal tissue classification using histopathological images.* **Computers and Electrical Engineering**, vol. 124, article 110296, 2025. DOI: [10.1016/j.compeleceng.2025.110296](https://doi.org/10.1016/j.compeleceng.2025.110296)
 
-This repository holds the code behind that paper: a CNN that classifies colorectal histology tiles into tissue types. It fuses a **low-level** and a **high-level** feature stream with **constraint fusion**, which weights each stream by its cosine similarity to the combined features.
+This repository contains the author's experiment notebooks for that paper and a cleaned, tested implementation of the model: a CNN that classifies colorectal histology tiles into tissue types. The paper also names a code repository maintained by a co-author, [KarnatiMOHAN/FMANet_colorectal-tissue_classification](https://github.com/KarnatiMOHAN/FMANet_colorectal-tissue_classification). It fuses a **low-level** and a **high-level** feature stream with **constraint fusion**, which weights each stream by its cosine similarity to the combined features.
 
 The code was cleaned up from the original Colab notebooks (kept unmodified in [`notebooks/`](notebooks/)). Please read [Relationship between this code and the paper](#relationship-between-this-code-and-the-paper) before comparing numbers: the notebooks and the paper differ in a few details, and they are listed there.
 
@@ -55,8 +55,10 @@ The recorded results come from the original notebooks. Comparing them to the pap
 |---|---|---|
 | Channel and spatial attention modules | Part of the network (see figure) | Defined, but **not connected to the output**: the notebooks set `x_l = A1; x_g = A2`, so the trained graph contains neither module. A model with them wired in has 5,432,145 parameters; the notebooks' summaries show 5,389,832, which this port reproduces exactly *without* them. |
 | Optimizer / learning rate / batch size | Adam, learning rate 1e-3 (the paper writes "for all 32 batches") | Nadam, learning rate 1e-4, batch size 16 |
-| Second dataset | NCT-CRC-HE-100K | CRC-VAL-HE-7K (the 7,180-tile validation set) |
+| Evaluation protocol | not stated in the abstract | One random 90% / 10% split (the notebooks). The reference code named in the paper uses stratified 10-fold cross-validation, so the paper's numbers may come from a different protocol than the recorded notebook outputs. |
 | Module widths in the figure | Channel attention: Dense 64, 64. Spatial attention: 3x3 convs of 8, 8, 64, then 1x1 | Channel attention: Dense C/2 then C. Spatial attention: 1x1 convs of C/16, C/16, C, then 1 |
+
+The reference implementation named in the paper (`main.py` in the repository linked above) has the same structure: it builds the two attention modules but sets `x_l = A1; x_g = A2`, so they are not connected there either. Its training loop also differs from both the paper and these notebooks: it uses Adam at 1e-4, batch size 16, up to 100 epochs, and stratified 10-fold cross-validation with early stopping on validation loss (patience 5).
 
 `build_fmanet(use_attention_modules=True)` wires the two attention modules in as drawn in the paper's figure. That variant was **not trained** in the original notebooks, so no result is claimed for it.
 
@@ -66,6 +68,8 @@ The recorded results come from the original notebooks. Comparing them to the pap
 |---|---|---|---|
 | `kather-5000` | Kather et al. 2016 colorectal histology, 5,000 tiles | 8 | 10% (500 tiles) |
 | `crc-val-he-7k` | CRC-VAL-HE-7K, 7,180 tiles | 9 | 10% (718 tiles) |
+
+The paper calls its second dataset NCT-CRC-HE-100K but describes it as 7,180 images from fifty patients (Zenodo record 1214456). That is the CRC-VAL-HE-7K set used in the notebook, so the two names refer to the same data here.
 
 Datasets are not included. See [`data/README.md`](data/README.md) for download links, folder layout and citations. Images are resized to 128 x 128, scaled to [0, 1] and read with OpenCV (BGR order, as in the notebooks).
 
@@ -111,7 +115,7 @@ These are the numbers stored in the notebooks' outputs. **They were not re-run f
 | Dataset | Test tiles | Accuracy | Macro F1 | Epochs run | Paper reports |
 |---|---|---|---|---|---|
 | Kather 5,000 | 500 | **0.950** | 0.95 | 25 | 95% |
-| CRC-VAL-HE-7K | 718 | **0.9735** | 0.97 | 9 | 97% (on NCT-CRC-HE-100K) |
+| CRC-VAL-HE-7K | 718 | **0.9735** | 0.97 | 9 | 97% ("NCT-CRC-HE-100K", 7,180 images) |
 
 Per-class one-vs-rest AUC (from the ROC plots): Kather 0.991 to 0.9999; CRC-VAL-HE-7K 0.9879 to 1.0000. Full per-class tables are in [`results/recorded_results.md`](results/recorded_results.md).
 

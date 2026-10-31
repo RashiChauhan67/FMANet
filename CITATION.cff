@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below."
+type: software
+title: "FMANet: colorectal tissue classification from histopathological images"
+authors:
+  - family-names: Chauhan
+    given-names: Rashi
+license: MIT
+repository-code: "https://github.com/RashiChauhan67/FMANet"
+preferred-citation:
+  type: article
+  title: "Fused multi-level attention features with a constraint fusion network for colorectal tissue classification using histopathological images"
+  authors:
+    - family-names: Chauhan
+      given-names: Rashi
+    - family-names: Karnati
+      given-names: Mohan
+    - family-names: Singh
+      given-names: Pradeep
+  journal: "Computers and Electrical Engineering"
+  volume: 124
+  number: "110296"
+  year: 2025
+  doi: "10.1016/j.compeleceng.2025.110296"

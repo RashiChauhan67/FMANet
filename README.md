@@ -1,4 +1,6 @@
-# FMANet: Colorectal Tissue Classification from Histopathological Images
+# FMANet
+
+**Colorectal tissue classification from histopathological images, using fused multi-level attention features and constraint fusion.**
 
 [![CI](https://github.com/RashiChauhan67/FMANet/actions/workflows/ci.yml/badge.svg)](https://github.com/RashiChauhan67/FMANet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -6,29 +8,38 @@
 ![TensorFlow 2.16+](https://img.shields.io/badge/TensorFlow-2.16%2B-orange)
 
 > **Paper.** R. Chauhan, K. Mohan, P. Singh. *Fused multi-level attention features with a constraint fusion network for colorectal tissue classification using histopathological images.* **Computers and Electrical Engineering**, vol. 124, article 110296, 2025. DOI: [10.1016/j.compeleceng.2025.110296](https://doi.org/10.1016/j.compeleceng.2025.110296)
+>
+> **Related repository.** Code released by the paper's co-author: [KarnatiMOHAN/FMANet_colorectal-tissue_classification](https://github.com/KarnatiMOHAN/FMANet_colorectal-tissue_classification).
 
-This repository contains the author's experiment notebooks for that paper and a cleaned, tested implementation of the model: a CNN that classifies colorectal histology tiles into tissue types. The paper also names a code repository maintained by a co-author, [KarnatiMOHAN/FMANet_colorectal-tissue_classification](https://github.com/KarnatiMOHAN/FMANet_colorectal-tissue_classification). It fuses a **low-level** and a **high-level** feature stream with **constraint fusion**, which weights each stream by its cosine similarity to the combined features.
+[Overview](#overview) · [Architecture](#architecture) · [Quick start](#quick-start) · [Datasets](#datasets) · [Results](#results) · [Notes](#notes) · [Citation](#citation)
 
-The code was cleaned up from the original Colab notebooks (kept unmodified in [`notebooks/`](notebooks/)). Please read [Relationship between this code and the paper](#relationship-between-this-code-and-the-paper) before comparing numbers: the notebooks and the paper differ in a few details, and they are listed there.
+## Overview
 
-## Highlights
+FMANet classifies 128 x 128 H&E tissue tiles. A **low-level** and a **high-level** feature stream, each refined by a dilated residual-inception block, are pooled and embedded by shared dense layers. **Constraint fusion** then weights each stream by its cosine similarity to the combined features, and the weighted features feed a softmax classifier.
 
-- Two datasets: Kather 5,000-tile histology (8 classes) and CRC-VAL-HE-7K (9 classes).
-- Recorded test accuracy in the notebooks: **95.0%** (Kather, 500 test tiles) and **97.35%** (CRC-VAL-HE-7K, 718 test tiles).
-- 5.39 M parameters, 20.6 MB (model size printed by the notebooks).
-- Modular Keras 3 port with unit tests, a command-line trainer, and two training protocols (`notebook` and a leakage-free `holdout`).
+This repository has a cleaned, tested Keras 3 implementation, the original experiment notebooks, and the recorded results.
+
+| | Kather 5,000 | CRC-VAL-HE-7K |
+|---|---|---|
+| Classes | 8 | 9 |
+| Test tiles | 500 | 718 |
+| Test accuracy | **95.0%** | **97.35%** |
+| Macro F1 | 0.95 | 0.97 |
+| Parameters | 5.39 M | 5.39 M |
+
+Accuracies are the values recorded in the notebooks (see [Notes](#notes)).
 
 ## Architecture
 
-The author's figure from the paper (full network):
+![FMANet architecture](docs/figures/fmanet_architecture.png)
 
-![FMANet architecture from the paper](docs/figures/fmanet_architecture.png)
+*Schematic of the full network. Layer widths in `src/fmanet/model.py` are authoritative.*
 
-The modules drawn in the paper (dilated residual-inception block, channel attention, spatial attention):
+![FMANet modules](docs/figures/fmanet_modules.png)
 
-![FMANet modules from the paper](docs/figures/fmanet_modules.png)
+*The dilated residual-inception block, channel attention and spatial attention modules.*
 
-What the code in `src/fmanet/model.py` builds (this matches the notebooks' trained graph, verified by parameter count):
+The graph built by `src/fmanet/model.py`:
 
 ```mermaid
 flowchart LR
@@ -47,33 +58,7 @@ flowchart LR
     W --> F["weighted concat<br/>Dense 64 -> Dense N, softmax"]
 ```
 
-## Relationship between this code and the paper
-
-The recorded results come from the original notebooks. Comparing them to the paper shows these differences. They are reported here so nobody mistakes the repository for an exact reproduction of every detail in the paper.
-
-| Item | Paper | Original notebooks (and this code by default) |
-|---|---|---|
-| Channel and spatial attention modules | Part of the network (see figure) | Defined, but **not connected to the output**: the notebooks set `x_l = A1; x_g = A2`, so the trained graph contains neither module. A model with them wired in has 5,432,145 parameters; the notebooks' summaries show 5,389,832, which this port reproduces exactly *without* them. |
-| Optimizer / learning rate / batch size | Adam, learning rate 1e-3 (the paper writes "for all 32 batches") | Nadam, learning rate 1e-4, batch size 16 |
-| Evaluation protocol | not stated in the abstract | One random 90% / 10% split (the notebooks). The reference code named in the paper uses stratified 10-fold cross-validation, so the paper's numbers may come from a different protocol than the recorded notebook outputs. |
-| Module widths in the figure | Channel attention: Dense 64, 64. Spatial attention: 3x3 convs of 8, 8, 64, then 1x1 | Channel attention: Dense C/2 then C. Spatial attention: 1x1 convs of C/16, C/16, C, then 1 |
-
-The reference implementation named in the paper (`main.py` in the repository linked above) has the same structure: it builds the two attention modules but sets `x_l = A1; x_g = A2`, so they are not connected there either. Its training loop also differs from both the paper and these notebooks: it uses Adam at 1e-4, batch size 16, up to 100 epochs, and stratified 10-fold cross-validation with early stopping on validation loss (patience 5).
-
-`build_fmanet(use_attention_modules=True)` wires the two attention modules in as drawn in the paper's figure. That variant was **not trained** in the original notebooks, so no result is claimed for it.
-
-## Dataset
-
-| Key | Dataset | Classes | Test split |
-|---|---|---|---|
-| `kather-5000` | Kather et al. 2016 colorectal histology, 5,000 tiles | 8 | 10% (500 tiles) |
-| `crc-val-he-7k` | CRC-VAL-HE-7K, 7,180 tiles | 9 | 10% (718 tiles) |
-
-The paper calls its second dataset NCT-CRC-HE-100K but describes it as 7,180 images from fifty patients (Zenodo record 1214456). That is the CRC-VAL-HE-7K set used in the notebook, so the two names refer to the same data here.
-
-Datasets are not included. See [`data/README.md`](data/README.md) for download links, folder layout and citations. Images are resized to 128 x 128, scaled to [0, 1] and read with OpenCV (BGR order, as in the notebooks).
-
-## Installation
+## Quick start
 
 ```bash
 git clone https://github.com/RashiChauhan67/FMANet.git
@@ -82,10 +67,10 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
 
-## Usage
+Train and evaluate:
 
 ```bash
-# Original training protocol (the test split also drives early stopping; see below)
+# Original protocol: the test split also drives early stopping (see Notes)
 python scripts/train.py --data-dir /path/to/Kather_texture_2016_image_tiles_5000 \
     --dataset kather-5000 --output-dir runs/kather
 
@@ -98,9 +83,9 @@ python scripts/evaluate.py --data-dir /path/to/CRC-VAL-HE-7K --dataset crc-val-h
     --model runs/crc_val_holdout/best_model.keras
 ```
 
-Defaults follow the notebooks: Nadam (1e-4), batch size 16, up to 50 epochs, early stopping on validation accuracy (patience 10, `min_delta` 0.001, best weights restored). Each run writes `best_model.keras`, `history.json` and `metrics.json`.
+Defaults: Nadam (1e-4), batch size 16, up to 50 epochs, early stopping on validation accuracy (patience 10, best weights restored). Each run writes `best_model.keras`, `history.json` and `metrics.json`.
 
-In Python:
+Use the model directly:
 
 ```python
 from fmanet.model import build_fmanet, compile_fmanet
@@ -108,16 +93,23 @@ from fmanet.model import build_fmanet, compile_fmanet
 model = compile_fmanet(build_fmanet(num_classes=8))  # 5,389,832 parameters
 ```
 
-## Recorded results (from the original notebooks)
+## Datasets
 
-These are the numbers stored in the notebooks' outputs. **They were not re-run for this repository.**
+| Key | Dataset | Classes | Tiles | Test split |
+|---|---|---|---|---|
+| `kather-5000` | Colorectal histology (Kather et al., 2016) | 8 | 5,000 | 10% |
+| `crc-val-he-7k` | CRC-VAL-HE-7K (Kather et al., 2018) | 9 | 7,180 | 10% |
 
-| Dataset | Test tiles | Accuracy | Macro F1 | Epochs run | Paper reports |
+Both are on Zenodo under CC BY 4.0. Data is not included; see [`data/README.md`](data/README.md) for links, folder layout and citations. Images are resized to 128 x 128, scaled to [0, 1] and read with OpenCV.
+
+## Results
+
+Recorded in the original notebooks. **These were not re-run for this repository.** Per-class tables are in [`results/recorded_results.md`](results/recorded_results.md).
+
+| Dataset | Test tiles | Accuracy | Macro F1 | Epochs run | Per-class AUC |
 |---|---|---|---|---|---|
-| Kather 5,000 | 500 | **0.950** | 0.95 | 25 | 95% |
-| CRC-VAL-HE-7K | 718 | **0.9735** | 0.97 | 9 | 97% ("NCT-CRC-HE-100K", 7,180 images) |
-
-Per-class one-vs-rest AUC (from the ROC plots): Kather 0.991 to 0.9999; CRC-VAL-HE-7K 0.9879 to 1.0000. Full per-class tables are in [`results/recorded_results.md`](results/recorded_results.md).
+| Kather 5,000 | 500 | **0.950** | 0.95 | 25 | 0.991 to 0.9999 |
+| CRC-VAL-HE-7K | 718 | **0.9735** | 0.97 | 9 | 0.988 to 1.000 |
 
 | Kather 5,000 | CRC-VAL-HE-7K |
 |---|---|
@@ -125,47 +117,43 @@ Per-class one-vs-rest AUC (from the ROC plots): Kather 0.991 to 0.9999; CRC-VAL-
 | ![](results/figures/kather_roc.png) | ![](results/figures/crc_val_roc.png) |
 | ![](results/figures/kather_radar.png) | ![](results/figures/crc_val_radar.png) |
 
-t-SNE of the features before and after training (Kather 5,000, then CRC-VAL-HE-7K):
+t-SNE of the features before and after training:
 
-| Original features | Trained features |
-|---|---|
-| ![](results/figures/kather_tsne_original_features.png) | ![](results/figures/kather_tsne_trained_features.png) |
-| ![](results/figures/crc_val_tsne_original_features.png) | ![](results/figures/crc_val_tsne_trained_features.png) |
+| | Original features | Trained features |
+|---|---|---|
+| **Kather 5,000** | ![](results/figures/kather_tsne_original_features.png) | ![](results/figures/kather_tsne_trained_features.png) |
+| **CRC-VAL-HE-7K** | ![](results/figures/crc_val_tsne_original_features.png) | ![](results/figures/crc_val_tsne_trained_features.png) |
 
-Class indices in the plots: Kather 0 tumor, 1 stroma, 2 complex, 3 lympho, 4 debris, 5 mucosa, 6 adipose, 7 empty. CRC-VAL-HE-7K 0 ADI, 1 BACK, 2 DEB, 3 LYM, 4 MUC, 5 MUS, 6 NORM, 7 STR, 8 TUM.
+Class indices: Kather 0 tumor, 1 stroma, 2 complex, 3 lympho, 4 debris, 5 mucosa, 6 adipose, 7 empty. CRC-VAL-HE-7K 0 ADI, 1 BACK, 2 DEB, 3 LYM, 4 MUC, 5 MUS, 6 NORM, 7 STR, 8 TUM.
 
-## Limitations and reproducibility notes
+## Notes
 
-- **The recorded test accuracy is optimistic.** The notebooks pass the test split as `validation_data`, and early stopping and checkpoint selection monitor it. The reported test accuracy equals the best validation accuracy exactly (0.9500 and 0.9735). Use `--protocol holdout` for numbers that are not selected on the test set.
-- Splits are random (not stratified), at the image level, with a fixed seed. Tiles from the same slide may appear on both sides of the split if the dataset has that structure.
-- The notebooks do not set framework-level random seeds for training, so a re-run will not reproduce the recorded numbers bit for bit.
-- This port reads files in sorted order; the notebooks used `os.listdir` order, so the exact test tiles can differ slightly from the original runs.
-- The notebooks' FLOPs figure (about 139 GFLOPs) comes from a hand-written per-layer estimator and should be treated as approximate.
-- `colorectal-tissue_dataset_1.ipynb` also contains stray radar charts from other datasets near its end; they are not part of this project.
-- The second notebook originally contained an unrelated EEG experiment. Only its colorectal section (cells 0 to 51) is included here: `colorectal-tissue_dataset_2_crc_only.ipynb`.
+**Implementation.**
+- The default model reproduces the graph trained in the notebooks. In it, the spatial- and channel-attention modules are defined but their outputs are not connected to the classifier (5,389,832 parameters for 8 classes).
+- `build_fmanet(use_attention_modules=True)` connects them as shown in the architecture figure (5,432,145 parameters). That variant has not been trained here.
+- The parameter counts match the notebooks' `model.summary()` output; the tests check them.
 
-## Repository layout
+**Evaluation.**
+- The notebooks pass the test split as `validation_data`, and early stopping and checkpoint selection monitor it, so the recorded accuracies equal the best validation accuracy (0.9500 and 0.9735) and are optimistic. Use `--protocol holdout` for numbers that are not selected on the test set.
+- Splits are random (not stratified) at the image level with a fixed seed. No framework-level seeds are set, so a re-run will not reproduce the recorded numbers exactly. This port reads files in sorted order; the notebooks used `os.listdir` order, so the exact test tiles can differ slightly.
+- The FLOPs figure in the notebooks (about 139 GFLOPs) comes from a hand-written per-layer estimator and is approximate.
+
+**Notebooks.** `colorectal-tissue_dataset_1.ipynb` contains some stray radar charts from other datasets near its end. The second notebook is included only up to its colorectal section (`colorectal-tissue_dataset_2_crc_only.ipynb`); an unrelated experiment that followed it was removed.
+
+## Repository structure
 
 ```
 .
 ├── src/fmanet/          # model, data loading, training and evaluation
 ├── scripts/             # train.py, evaluate.py
 ├── tests/               # unit tests (synthetic data; no dataset needed)
-├── notebooks/           # original notebooks (unmodified, except the EEG section removed)
-├── docs/figures/        # architecture figures from the paper
+├── notebooks/           # original experiment notebooks
+├── docs/figures/        # architecture figures
 ├── results/             # recorded notebook results and figures
 └── data/README.md       # dataset instructions
 ```
 
-## Development
-
-```bash
-pip install -e ".[dev]"
-ruff check .
-pytest
-```
-
-The tests check, among other things, that the model has exactly the parameter counts printed by the original notebooks (5,389,832 for 8 classes, 5,389,897 for 9).
+Development: `pip install -e ".[dev]"`, then `ruff check .` and `pytest`.
 
 ## Citation
 
@@ -187,4 +175,4 @@ If you use this code, please cite the paper (a `CITATION.cff` is provided):
 
 MIT. See [LICENSE](LICENSE). The datasets have their own licenses; check them before reuse.
 
-**Figures.** The architecture figures in `docs/figures/` are reproduced from the paper by its authors. Reuse of those figures is subject to the publisher's terms (Elsevier); the MIT license covers the code, and the result plots generated from the notebooks.
+**Figures.** The architecture figures in `docs/figures/` are reproduced from the paper by its authors. Reuse of those figures is subject to the publisher's terms (Elsevier); the MIT license covers the code and the result plots generated from the notebooks.

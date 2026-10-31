@@ -44,12 +44,3 @@ Test loss 0.1159, test accuracy 0.9735. Training ran 9 epochs; best validation a
 | | weighted avg | 0.98 | 0.97 | 0.97 | 718 | |
 
 AUC values are read from the legends of the ROC plots in the notebooks.
-
-## What the paper reports
-
-| Dataset | Paper |
-|---|---|
-| Colorectal histology (Kather 5,000) | accuracy 95% |
-| Dataset-2, named NCT-CRC-HE-100K (described as 7,180 images, Zenodo 1214456) | accuracy 97% |
-
-The recorded numbers match the paper's accuracies at that precision. The paper's Dataset-2 is described as 7,180 images, which is the CRC-VAL-HE-7K set used in the notebook. See the README for the other differences between the notebooks and the paper.

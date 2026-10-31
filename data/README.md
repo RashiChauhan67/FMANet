@@ -34,13 +34,13 @@ CRC-VAL-HE-7K/
 - Read with OpenCV (BGR channel order), resized to 128 x 128, scaled to [0, 1].
 - Shuffled with seed 2, then split 90% / 10% (train / test) at random, without stratification.
 
-## Sources (as given in the paper)
+## Sources
 
 | Dataset | Source | License on Zenodo |
 |---|---|---|
-| Colorectal histology (paper's Dataset-1) | Kather, Zöllner, Bianconi, Melchers, Schad, Gaiser et al. *Collection of textures in colorectal cancer histology.* Zenodo, 2016. [doi:10.5281/zenodo.53169](https://zenodo.org/records/53169). Collected at the University Medical Center Mannheim (UMM). | CC BY 4.0 |
-| CRC-VAL-HE-7K (paper's Dataset-2, called NCT-CRC-HE-100K) | Kather, Halama, Marx. *100,000 histological images of human colorectal cancer and healthy tissue.* Zenodo, 2018. [doi:10.5281/zenodo.1214456](https://zenodo.org/records/1214456). The 7,180-image set from fifty patients. | CC BY 4.0 |
+| Colorectal histology (`kather-5000`) | Kather, Zöllner, Bianconi, Melchers, Schad, Gaiser et al. *Collection of textures in colorectal cancer histology.* Zenodo, 2016. [doi:10.5281/zenodo.53169](https://zenodo.org/records/53169). Collected at the University Medical Center Mannheim (UMM). | CC BY 4.0 |
+| CRC-VAL-HE-7K (`crc-val-he-7k`; part of the NCT-CRC-HE-100K release) | Kather, Halama, Marx. *100,000 histological images of human colorectal cancer and healthy tissue.* Zenodo, 2018. [doi:10.5281/zenodo.1214456](https://zenodo.org/records/1214456). The 7,180-image set from fifty patients. | CC BY 4.0 |
 
 Licenses were read from the Zenodo records. Please confirm them on the record page before reuse and cite the datasets when you publish results.
 
-Related paper for the second dataset: Kather, J. N. et al. *Predicting survival from colorectal cancer histology slides using deep learning: a retrospective multicenter study.* PLOS Medicine 16(1), e1002730 (2019).
+Related publication for the second dataset: Kather, J. N. et al. *Predicting survival from colorectal cancer histology slides using deep learning: a retrospective multicenter study.* PLOS Medicine 16(1), e1002730 (2019).

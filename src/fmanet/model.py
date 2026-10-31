@@ -112,7 +112,7 @@ def build_fmanet(
             graph does not contain them. ``False`` (default) reproduces that
             graph exactly (5,389,832 parameters for 8 classes). ``True`` routes
             the low-level stream through spatial attention and the high-level
-            stream through channel attention, as drawn in the paper's figure.
+            stream through channel attention, as shown in the architecture figure.
             That variant was **not** trained in the original notebooks.
     """
     inputs = layers.Input(input_shape)

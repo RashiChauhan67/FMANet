@@ -33,30 +33,7 @@ Accuracies are the values recorded in the notebooks (see [Notes](#notes)).
 
 ![FMANet architecture](docs/figures/fmanet_architecture.png)
 
-*Schematic of the full network. Layer widths in `src/fmanet/model.py` are authoritative.*
-
 ![FMANet modules](docs/figures/fmanet_modules.png)
-
-*The dilated residual-inception block, channel attention and spatial attention modules.*
-
-The graph built by `src/fmanet/model.py`:
-
-```mermaid
-flowchart LR
-    I["Input<br/>128 x 128 x 3"] --> LL["Low-level stream<br/>3 x (Conv 64 + BN), concat"]
-    LL --> A1["Dilated residual-inception<br/>192 filters, rates 1-2-3<br/>-> A1"]
-    LL --> HL["High-level stream<br/>3 x (Conv 64 + BN), concat"]
-    HL --> A2["Dilated residual-inception<br/>192 filters, rates 1-2-3<br/>-> A2"]
-    A1 --> G1["GAP -> Dense 384"]
-    A2 --> G2["GAP -> Dense 384"]
-    A1 --> CAT["concat -> GAP"]
-    A2 --> CAT
-    G1 --> S["Shared Dense 768 x 2"]
-    G2 --> S
-    CAT --> S
-    S --> W["tanh cosine similarity to the<br/>combined feature -> weights a_l, a_g<br/>(a_l + a_g = 1)"]
-    W --> F["weighted concat<br/>Dense 64 -> Dense N, softmax"]
-```
 
 ## Quick start
 
@@ -101,6 +78,10 @@ model = compile_fmanet(build_fmanet(num_classes=8))  # 5,389,832 parameters
 | `crc-val-he-7k` | CRC-VAL-HE-7K (Kather et al., 2018) | 9 | 7,180 | 10% |
 
 Both are on Zenodo under CC BY 4.0. Data is not included; see [`data/README.md`](data/README.md) for links, folder layout and citations. Images are resized to 128 x 128, scaled to [0, 1] and read with OpenCV.
+
+![Kather 5,000 sample tiles](docs/figures/dataset_kather_samples.png)
+
+![CRC-VAL-HE-7K sample tiles](docs/figures/dataset_crc_val_samples.png)
 
 ## Results
 
@@ -148,7 +129,7 @@ Class indices: Kather 0 tumor, 1 stroma, 2 complex, 3 lympho, 4 debris, 5 mucosa
 ├── scripts/             # train.py, evaluate.py
 ├── tests/               # unit tests (synthetic data; no dataset needed)
 ├── notebooks/           # original experiment notebooks
-├── docs/figures/        # architecture figures
+├── docs/figures/        # architecture and dataset figures
 ├── results/             # recorded notebook results and figures
 └── data/README.md       # dataset instructions
 ```
@@ -175,4 +156,4 @@ If you use this code, please cite the paper (a `CITATION.cff` is provided):
 
 MIT. See [LICENSE](LICENSE). The datasets have their own licenses; check them before reuse.
 
-**Figures.** The architecture figures in `docs/figures/` are reproduced from the paper by its authors. Reuse of those figures is subject to the publisher's terms (Elsevier); the MIT license covers the code and the result plots generated from the notebooks.
+**Figures.** The architecture figures in `docs/figures/` are reproduced from the paper by its authors. Reuse of those figures is subject to the publisher's terms (Elsevier). The dataset sample tiles come from the datasets cited in `data/README.md` (CC BY 4.0). The MIT license covers the code and the result plots generated from the notebooks.

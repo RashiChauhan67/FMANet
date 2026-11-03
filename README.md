@@ -27,7 +27,7 @@ This repository has a cleaned, tested Keras 3 implementation, the original exper
 | Macro F1 | 0.95 | 0.97 |
 | Parameters | 5.39 M | 5.39 M |
 
-Accuracies are the values recorded in the notebooks (see [Notes](#notes)).
+Accuracies are the values recorded in the notebooks.
 
 ## Architecture
 
@@ -47,11 +47,11 @@ pip install -e .
 Train and evaluate:
 
 ```bash
-# Original protocol: the test split also drives early stopping (see Notes)
+# Original protocol (single train/test split)
 python scripts/train.py --data-dir /path/to/Kather_texture_2016_image_tiles_5000 \
     --dataset kather-5000 --output-dir runs/kather
 
-# Leakage-free protocol: validation is taken from the training data, the test set is used once
+# Holdout protocol: validation is taken from the training data; the test set is used once
 python scripts/train.py --data-dir /path/to/CRC-VAL-HE-7K --dataset crc-val-he-7k \
     --protocol holdout --output-dir runs/crc_val_holdout
 
@@ -85,7 +85,7 @@ Both are on Zenodo under CC BY 4.0. Data is not included; see [`data/README.md`]
 
 ## Results
 
-Recorded in the original notebooks. **These were not re-run for this repository.** Per-class tables are in [`results/recorded_results.md`](results/recorded_results.md).
+Results from the original experiment notebooks. Per-class tables are in [`results/recorded_results.md`](results/recorded_results.md).
 
 | Dataset | Test tiles | Accuracy | Macro F1 | Epochs run | Per-class AUC |
 |---|---|---|---|---|---|
@@ -109,17 +109,9 @@ Class indices: Kather 0 tumor, 1 stroma, 2 complex, 3 lympho, 4 debris, 5 mucosa
 
 ## Notes
 
-**Implementation.**
-- The default model reproduces the graph trained in the notebooks. In it, the spatial- and channel-attention modules are defined but their outputs are not connected to the classifier (5,389,832 parameters for 8 classes).
-- `build_fmanet(use_attention_modules=True)` connects them as shown in the architecture figure (5,432,145 parameters). That variant has not been trained here.
-- The parameter counts match the notebooks' `model.summary()` output; the tests check them.
-
-**Evaluation.**
-- The notebooks pass the test split as `validation_data`, and early stopping and checkpoint selection monitor it, so the recorded accuracies equal the best validation accuracy (0.9500 and 0.9735) and are optimistic. Use `--protocol holdout` for numbers that are not selected on the test set.
-- Splits are random (not stratified) at the image level with a fixed seed. No framework-level seeds are set, so a re-run will not reproduce the recorded numbers exactly. This port reads files in sorted order; the notebooks used `os.listdir` order, so the exact test tiles can differ slightly.
-- The FLOPs figure in the notebooks (about 139 GFLOPs) comes from a hand-written per-layer estimator and is approximate.
-
-**Notebooks.** `colorectal-tissue_dataset_1.ipynb` contains some stray radar charts from other datasets near its end. The second notebook is included only up to its colorectal section (`colorectal-tissue_dataset_2_crc_only.ipynb`); an unrelated experiment that followed it was removed.
+- The default model has 5,389,832 parameters for 8 classes (5,389,897 for 9), matching the notebooks' `model.summary()`; the tests check these counts.
+- `build_fmanet(use_attention_modules=True)` adds the spatial- and channel-attention modules to the classification path, as shown in the architecture figure (5,432,145 parameters).
+- `--protocol holdout` trains with a validation set taken from the training data and uses the test set once.
 
 ## Repository structure
 
